@@ -1,0 +1,1122 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Music Player</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background:
+                radial-gradient(circle at top left, #3b1d75, transparent 35%),
+                radial-gradient(circle at bottom right, #0d6b6b, transparent 35%),
+                #09090f;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 25px;
+        }
+
+        .player {
+            width: 100%;
+            max-width: 950px;
+            min-height: 600px;
+            background: rgba(20, 20, 30, 0.88);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 30px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        /* =========================
+           LEFT PLAYER
+        ========================= */
+
+        .left {
+            padding: 45px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .brand {
+            position: absolute;
+            top: 25px;
+            left: 30px;
+            font-size: 15px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            opacity: .8;
+        }
+
+        .cover {
+            width: 280px;
+            height: 280px;
+            border-radius: 25px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #6d28d9, #06b6d4);
+            box-shadow: 0 25px 50px rgba(0,0,0,.5);
+            position: relative;
+        }
+
+        .cover::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 30% 30%, rgba(255,255,255,.3), transparent 25%),
+                radial-gradient(circle at 70% 70%, rgba(255,255,255,.15), transparent 25%);
+        }
+
+        .music-icon {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 100px;
+            position: relative;
+        }
+
+        .playing .cover {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%,100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.025);
+            }
+        }
+
+        .song-info {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .song-info h1 {
+            font-size: 27px;
+            margin-bottom: 8px;
+        }
+
+        .song-info p {
+            color: #aaa;
+            font-size: 15px;
+        }
+
+        /* =========================
+           RIGHT PLAYLIST
+        ========================= */
+
+        .right {
+            padding: 35px;
+            background: rgba(255,255,255,.025);
+            border-left: 1px solid rgba(255,255,255,.08);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .playlist-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .playlist-header h2 {
+            font-size: 21px;
+        }
+
+        .track-count {
+            color: #999;
+            font-size: 13px;
+        }
+
+        .playlist {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 430px;
+            padding-right: 5px;
+        }
+
+        .playlist::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .playlist::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 10px;
+        }
+
+        .track {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 13px;
+            margin-bottom: 8px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: .25s;
+        }
+
+        .track:hover {
+            background: rgba(255,255,255,.08);
+        }
+
+        .track.active {
+            background: linear-gradient(
+                90deg,
+                rgba(124,58,237,.35),
+                rgba(6,182,212,.15)
+            );
+        }
+
+        .track-number {
+            width: 25px;
+            text-align: center;
+            color: #888;
+            font-size: 13px;
+        }
+
+        .track-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            background: linear-gradient(135deg,#7c3aed,#06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .track-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .track-info strong {
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 14px;
+        }
+
+        .track-info span {
+            display: block;
+            color: #888;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .playing-animation {
+            display: none;
+            gap: 3px;
+            align-items: end;
+            height: 18px;
+        }
+
+        .active .playing-animation {
+            display: flex;
+        }
+
+        .bar {
+            width: 3px;
+            background: #22d3ee;
+            border-radius: 3px;
+            animation: equalizer .8s infinite alternate;
+        }
+
+        .bar:nth-child(1) {
+            height: 8px;
+            animation-delay: .1s;
+        }
+
+        .bar:nth-child(2) {
+            height: 15px;
+            animation-delay: .3s;
+        }
+
+        .bar:nth-child(3) {
+            height: 11px;
+            animation-delay: .2s;
+        }
+
+        @keyframes equalizer {
+            from {
+                transform: scaleY(.4);
+            }
+            to {
+                transform: scaleY(1);
+            }
+        }
+
+        /* =========================
+           CONTROLS
+        ========================= */
+
+        .controls {
+            width: 100%;
+            margin-top: 25px;
+        }
+
+        .progress-area {
+            width: 100%;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 20px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .progress {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg,#8b5cf6,#06b6d4);
+            border-radius: 20px;
+        }
+
+        .time {
+            display: flex;
+            justify-content: space-between;
+            color: #888;
+            font-size: 11px;
+            margin-top: 7px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 18px;
+            margin-top: 20px;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            color: white;
+            background: transparent;
+            transition: .2s;
+        }
+
+        button:hover {
+            transform: scale(1.12);
+        }
+
+        .small-btn {
+            font-size: 20px;
+            color: #aaa;
+        }
+
+        .play-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg,#8b5cf6,#06b6d4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            box-shadow: 0 10px 30px rgba(6,182,212,.25);
+        }
+
+        .bottom-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 18px;
+        }
+
+        .extra-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .extra-controls button {
+            color: #888;
+            font-size: 17px;
+        }
+
+        .extra-controls button.active {
+            color: #22d3ee;
+        }
+
+        .volume {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .volume input {
+            width: 90px;
+            cursor: pointer;
+            accent-color: #22d3ee;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 750px) {
+
+            body {
+                padding: 12px;
+            }
+
+            .player {
+                grid-template-columns: 1fr;
+                border-radius: 22px;
+            }
+
+            .left {
+                padding: 55px 25px 30px;
+            }
+
+            .right {
+                border-left: none;
+                border-top: 1px solid rgba(255,255,255,.08);
+                padding: 25px;
+            }
+
+            .cover {
+                width: 220px;
+                height: 220px;
+            }
+
+            .music-icon {
+                font-size: 75px;
+            }
+
+            .playlist {
+                max-height: 300px;
+            }
+
+            .song-info h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="player" id="player">
+
+    <!-- ================= LEFT ================= -->
+
+    <div class="left">
+
+        <div class="brand">
+            🎧 PLAY LIST WAHYU AJI F
+        </div>
+
+        <div class="cover">
+            <div class="music-icon">
+                🎵
+            </div>
+        </div>
+
+        <div class="song-info">
+            <h1 id="title">Pilih Lagu</h1>
+            <p id="artist">My Playlist</p>
+        </div>
+
+        <div class="controls">
+
+            <div class="progress-area">
+
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress" id="progress"></div>
+                </div>
+
+                <div class="time">
+                    <span id="currentTime">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+
+            </div>
+
+            <div class="buttons">
+
+                <button class="small-btn" id="prevBtn">
+                    ⏮
+                </button>
+
+                <button class="play-btn" id="playBtn">
+                    ▶
+                </button>
+
+                <button class="small-btn" id="nextBtn">
+                    ⏭
+                </button>
+
+            </div>
+
+            <div class="bottom-controls">
+
+                <div class="extra-controls">
+
+                    <button id="shuffleBtn" title="Shuffle">
+                        🔀
+                    </button>
+
+                    <button id="repeatBtn" title="Repeat">
+                        🔁
+                    </button>
+
+                </div>
+
+                <div class="volume">
+
+                    <span>🔊</span>
+
+                    <input
+                        type="range"
+                        id="volume"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value="0.8"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= RIGHT ================= -->
+
+    <div class="right">
+
+        <div class="playlist-header">
+
+            <h2>Playlist</h2>
+
+            <span class="track-count" id="trackCount">
+                0 Lagu
+            </span>
+
+        </div>
+
+        <div class="playlist" id="playlist">
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- AUDIO -->
+
+<audio id="audio"></audio>
+
+
+<script>
+
+    /*
+    =========================================================
+    DAFTAR MUSIK
+    =========================================================
+
+    GANTI NAMA FILE DI BAGIAN INI SESUAI MUSIK KAMU.
+
+    Contoh:
+
+    {
+        title: "Nama Lagu",
+        artist: "Nama Penyanyi",
+        file: "lagu1.mp3"
+    }
+
+    Pastikan file MP3 berada di folder yang sama
+    dengan index.html.
+    =========================================================
+    */
+
+    const songs = [
+
+        {
+            title: "Bye x Into you",
+            artist: "Ariana Grande",
+            file: "intoyou.mp3"
+        },
+
+        {
+            title: "The Ocean",
+            artist: "Mike Perry ft Shy Martin",
+            file: "theocean.mp3"
+        },
+
+        {
+            title: "Second Hand",
+            artist: "Sincerely Lue",
+            file: "secondhand.mp3"
+        },
+
+        {
+            title: "Where We Started",
+            artist: "Lost Sky ft Jex",
+            file: "wherewestrated.mp3"
+        },
+
+        {
+            title: "Just Dance (speed up)",
+            artist: "Odex",
+            file: "justdance.mp3"
+        },
+
+        {
+            title: "Never For Real",
+            artist: "Remastered",
+            file: "neverforreal.mp3"
+        },
+
+        {
+            title: "The River",
+            artist: "Axel Johansson",
+            file: "theriver.mp3"
+        },
+
+        {
+            title: "Rise",
+            artist: "Jonas Blue ft Jack & Jack",
+            file: "rise.mp3"
+        },
+
+        {
+            title: "Mama",
+            artist: "Jonas Blue ft William Single",
+            file: "mama.mp3"
+        },
+
+        {
+            title: "Better",
+            artist: "Khalid",
+            file: "better.mp3"
+        },
+
+        {
+            title: "Bye Bye",
+            artist: "Ariana Grande",
+            file: "byebye.mp3"
+        },
+
+        {
+            title: "Hurts So Good",
+            artist: "Astrid s",
+            file: "hurtssogood.mp3"
+        },
+
+        {
+            title: "With Out Me",
+            artist: "Halsey",
+            file: "withoutme.mp3"
+        },
+
+        {
+            title: "Issues",
+            artist: "Julia Michaels",
+            file: "issues.mp3"
+        }
+
+    ];
+
+
+    /* =========================
+       ELEMENT
+    ========================= */
+
+    const audio = document.getElementById("audio");
+
+    const title = document.getElementById("title");
+
+    const artist = document.getElementById("artist");
+
+    const playBtn = document.getElementById("playBtn");
+
+    const prevBtn = document.getElementById("prevBtn");
+
+    const nextBtn = document.getElementById("nextBtn");
+
+    const progress = document.getElementById("progress");
+
+    const progressBar = document.getElementById("progressBar");
+
+    const currentTime = document.getElementById("currentTime");
+
+    const duration = document.getElementById("duration");
+
+    const playlist = document.getElementById("playlist");
+
+    const volume = document.getElementById("volume");
+
+    const shuffleBtn = document.getElementById("shuffleBtn");
+
+    const repeatBtn = document.getElementById("repeatBtn");
+
+    const player = document.getElementById("player");
+
+    const trackCount = document.getElementById("trackCount");
+
+
+    /* =========================
+       VARIABLES
+    ========================= */
+
+    let currentIndex = 0;
+
+    let isShuffle = false;
+
+    let isRepeat = false;
+
+
+    /* =========================
+       FORMAT TIME
+    ========================= */
+
+    function formatTime(time) {
+
+        if (isNaN(time)) {
+            return "0:00";
+        }
+
+        const minutes = Math.floor(time / 60);
+
+        const seconds = Math.floor(time % 60);
+
+        return minutes + ":" + seconds.toString().padStart(2, "0");
+
+    }
+
+
+    /* =========================
+       LOAD SONG
+    ========================= */
+
+    function loadSong(index) {
+
+        currentIndex = index;
+
+        const song = songs[currentIndex];
+
+        title.textContent = song.title;
+
+        artist.textContent = song.artist;
+
+        audio.src = song.file;
+
+        updatePlaylist();
+
+    }
+
+
+    /* =========================
+       PLAY SONG
+    ========================= */
+
+    function playSong() {
+
+        audio.play();
+
+        playBtn.textContent = "⏸";
+
+        player.classList.add("playing");
+
+    }
+
+
+    /* =========================
+       PAUSE SONG
+    ========================= */
+
+    function pauseSong() {
+
+        audio.pause();
+
+        playBtn.textContent = "▶";
+
+        player.classList.remove("playing");
+
+    }
+
+
+    /* =========================
+       PLAY / PAUSE
+    ========================= */
+
+    playBtn.addEventListener("click", function() {
+
+        if (audio.paused) {
+
+            playSong();
+
+        } else {
+
+            pauseSong();
+
+        }
+
+    });
+
+
+    /* =========================
+       NEXT SONG
+    ========================= */
+
+    function nextSong() {
+
+        if (isShuffle) {
+
+            let randomIndex;
+
+            do {
+
+                randomIndex = Math.floor(
+                    Math.random() * songs.length
+                );
+
+            } while (
+                randomIndex === currentIndex &&
+                songs.length > 1
+            );
+
+            currentIndex = randomIndex;
+
+        } else {
+
+            currentIndex++;
+
+            if (currentIndex >= songs.length) {
+                currentIndex = 0;
+            }
+
+        }
+
+        loadSong(currentIndex);
+
+        playSong();
+
+    }
+
+
+    /* =========================
+       PREVIOUS SONG
+    ========================= */
+
+    function previousSong() {
+
+        currentIndex--;
+
+        if (currentIndex < 0) {
+            currentIndex = songs.length - 1;
+        }
+
+        loadSong(currentIndex);
+
+        playSong();
+
+    }
+
+
+    nextBtn.addEventListener("click", nextSong);
+
+    prevBtn.addEventListener("click", previousSong);
+
+
+    /* =========================
+       AUTO NEXT
+    =========================
+
+       INI YANG MEMBUAT LAGU
+       OTOMATIS PINDAH KE
+       LAGU BERIKUTNYA.
+    ========================= */
+
+    audio.addEventListener("ended", function() {
+
+        if (isRepeat) {
+
+            audio.currentTime = 0;
+
+            playSong();
+
+        } else {
+
+            nextSong();
+
+        }
+
+    });
+
+
+    /* =========================
+       PROGRESS
+    ========================= */
+
+    audio.addEventListener("timeupdate", function() {
+
+        if (!audio.duration) {
+            return;
+        }
+
+        const percent =
+            (audio.currentTime / audio.duration) * 100;
+
+        progress.style.width = percent + "%";
+
+        currentTime.textContent =
+            formatTime(audio.currentTime);
+
+    });
+
+
+    audio.addEventListener("loadedmetadata", function() {
+
+        duration.textContent =
+            formatTime(audio.duration);
+
+    });
+
+
+    /* =========================
+       CLICK PROGRESS
+    ========================= */
+
+    progressBar.addEventListener("click", function(e) {
+
+        const width = this.clientWidth;
+
+        const clickX = e.offsetX;
+
+        const percent = clickX / width;
+
+        audio.currentTime =
+            percent * audio.duration;
+
+    });
+
+
+    /* =========================
+       VOLUME
+    ========================= */
+
+    volume.addEventListener("input", function() {
+
+        audio.volume = this.value;
+
+    });
+
+
+    /* =========================
+       SHUFFLE
+    ========================= */
+
+    shuffleBtn.addEventListener("click", function() {
+
+        isShuffle = !isShuffle;
+
+        shuffleBtn.classList.toggle(
+            "active",
+            isShuffle
+        );
+
+    });
+
+
+    /* =========================
+       REPEAT
+    ========================= */
+
+    repeatBtn.addEventListener("click", function() {
+
+        isRepeat = !isRepeat;
+
+        repeatBtn.classList.toggle(
+            "active",
+            isRepeat
+        );
+
+    });
+
+
+    /* =========================
+       CREATE PLAYLIST
+    ========================= */
+
+    function createPlaylist() {
+
+        playlist.innerHTML = "";
+
+        trackCount.textContent =
+            songs.length + " Lagu";
+
+        songs.forEach(function(song, index) {
+
+            const track = document.createElement("div");
+
+            track.className = "track";
+
+            track.innerHTML = `
+
+                <div class="track-number">
+                    ${index + 1}
+                </div>
+
+                <div class="track-icon">
+                    🎵
+                </div>
+
+                <div class="track-info">
+
+                    <strong>
+                        ${song.title}
+                    </strong>
+
+                    <span>
+                        ${song.artist}
+                    </span>
+
+                </div>
+
+                <div class="playing-animation">
+
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+                    <div class="bar"></div>
+
+                </div>
+
+            `;
+
+
+            track.addEventListener(
+                "click",
+                function() {
+
+                    loadSong(index);
+
+                    playSong();
+
+                }
+            );
+
+
+            playlist.appendChild(track);
+
+        });
+
+    }
+
+
+    /* =========================
+       UPDATE PLAYLIST
+    ========================= */
+
+    function updatePlaylist() {
+
+        const tracks =
+            document.querySelectorAll(".track");
+
+        tracks.forEach(function(track, index) {
+
+            track.classList.toggle(
+                "active",
+                index === currentIndex
+            );
+
+        });
+
+    }
+
+
+    /* =========================
+       AUDIO ERROR
+    ========================= */
+
+    audio.addEventListener("error", function() {
+
+        console.log(
+            "File musik tidak ditemukan: " +
+            songs[currentIndex].file
+        );
+
+        title.textContent =
+            "File tidak ditemukan";
+
+        artist.textContent =
+            songs[currentIndex].file;
+
+    });
+
+
+    /* =========================
+       KEYBOARD SHORTCUT
+    ========================= */
+
+    document.addEventListener("keydown", function(e) {
+
+        if (e.code === "Space") {
+
+            e.preventDefault();
+
+            if (audio.paused) {
+                playSong();
+            } else {
+                pauseSong();
+            }
+
+        }
+
+        if (e.code === "ArrowRight") {
+            nextSong();
+        }
+
+        if (e.code === "ArrowLeft") {
+            previousSong();
+        }
+
+    });
+
+
+    /* =========================
+       INITIALIZE
+    ========================= */
+
+    audio.volume = 0.8;
+
+    createPlaylist();
+
+    loadSong(0);
+
+</script>
+
+</body>
+</html>
+
